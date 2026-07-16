@@ -1,0 +1,116 @@
+name: ci.yml
+
+# ==========================================
+# TRIGGERS: Set to the "main" branch
+# ==========================================
+on:
+  push:
+    branches: [ "main" ] # Runs when code is pushed/merged to main
+  pull_request:
+    branches: [ "main" ] # Runs when a PR is opened against main
+  workflow_dispatch:     # Allows you to click "Run workflow" manually in the UI
+
+jobs:
+  # ==========================================
+  # INITIAL META JOBS
+  # ==========================================
+  meta-determine-runners:
+    name: '[meta] determine runners'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo Hello, world!
+
+  meta-record-frozen-commit:
+    name: '[meta] record frozen commit'
+    runs-on: ubuntu-26.04
+    steps:
+      - run: echo Add other actions to build,
+
+  # ==========================================
+  # FIRST LEVEL DEPENDENCIES
+  # ==========================================
+  test-ancestor-commits:
+    name: 'test ancestor commits'
+    needs: meta-determine-runners
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo test, and deploy your project.
+
+  lint:
+    name: 'lint'
+    needs: meta-determine-runners
+    runs-on: macos-latest
+    steps:
+      - run: ls
+
+  # ==========================================
+  # MATRIX BLOCKS (Grouped Jobs)
+  # ==========================================
+  macos-native-arm64:
+    name: 'Matrix: macos-native-arm64'
+    needs: [meta-determine-runners, meta-record-frozen-commit]
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        job: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] 
+    steps:
+      - run: ls
+
+  windows-native-dll:
+    name: 'Matrix: windows-native-dll'
+    needs: [meta-determine-runners, meta-record-frozen-commit]
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      matrix:
+        job: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] 
+    steps:
+      - run: lscpu
+
+  ci-matrix:
+    name: '${{ matrix.job_name }}'
+    needs: [test-ancestor-commits, meta-record-frozen-commit]
+    runs-on: macos-26-intel
+    strategy:
+      fail-fast: false 
+      matrix:
+        job_name:
+          - 'macOS native'
+          - 'macOS native, fuzz'
+          - 'Windows native, VS'
+          - 'Windows native, fuzz, VS'
+          - 'iwyu'
+          - '32 bit ARM'
+          - 'ASan + LSan + UBSan + integer'
+          - 'macOS-cross to arm64'
+          - 'macOS-cross to x86_64'
+          - 'FreeBSD Cross'
+          - 'No wallet'
+          - 'i686, no IPC'
+          - 'fuzzer,address,undefined,integer'
+          - 'Extra Job 14'
+          - 'Extra Job 15'
+    steps:
+      - run: ls
+
+  windows-cross:
+    name: 'Matrix: windows-cross'
+    needs: [test-ancestor-commits, meta-record-frozen-commit]
+    runs-on: windows-11-arm
+    strategy:
+      matrix:
+        job: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] 
+    steps:
+      - run: ls
+
+  # ==========================================
+  # FINAL DEPENDENCY
+  # ==========================================
+  windows-native-test:
+    name: 'Matrix: windows-native-test'
+    needs: [ci-matrix] 
+    runs-on: macos-15-intel
+    strategy:
+      matrix:
+        job: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] 
+    steps:
+      - run: ls 
